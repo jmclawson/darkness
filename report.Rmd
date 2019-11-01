@@ -1,0 +1,156 @@
+---
+title: |
+  | When is the Witching Hour? 
+  | Sentiments of Fear and Social Media
+author: "James M. Clawson"
+date: "23 Oct. 2019"
+header-includes:
+   - \usepackage{palatino}
+output: 
+  # pdf_document: default
+  github_document
+  # tufte::tufte_html:
+  #   tufte_variant: "envisioned"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Abstract
+Using social media postings about Halloween, this sentiment analysis correlates fearfulness to time of day, testing the hypothesis that posts made at night show more fearful content. Ultimately, it is determined that posts made at night are *not* more fearful than posts made during the day. The hour with the greatest average fear value is 6:00 AM.
+
+## Introduction
+On the Internet, nobody knows you're agog---but sentiment analysis can get close. As Halloween nears, social media posts polish a sweet tooth and turn toward ghosts and witches. Not everyone gets excited about costumes, though; Halloween's associated nighttime festivities make some people downright afraid. 
+
+This project analyzes emotions in social media posts about topics related to Halloween. Using a popular method of sentiment analysis, it correlates values of "fear" to a comment's posting time to determine when the most fearful posts are made: during the day or at night. The hypothesis is that nighttime posts will show more fear than posts made during the day. 
+
+Just as the night is dark, it should, I presume, also be full of terrors. By measuring fear values of posts made at different times of the day, analysis should make clear when commenters show their greatest trepidation.
+
+## Methods
+Respective CSV files were downloaded from [social-searcher.com](social-searcher.com) for five different search terms: halloween, ghosts, candy, vampires, and witches. 
+
+After text was cleaned and regularized, the `syuzhet` package was used to measure comments along eight axes of emotion: anger, anticipation, disgust, fear, joy, sadness, surprise, and trust. 
+
+Finally, groups were considered at two different divisions: first, divided at each hour of the day; and second, divided into groups of daytime and nighttime, with daytime corresponding to posts made between 6 AM and 6 PM. After the `dplyr` package was used to group data by these categories, average values were recorded for each grouping. These divisions made it possible to test the hypothesis, comparing the average of fear values at night versus the average of fear values during the day; they also made it possible to determine which hour is the one in which commenters show the most fear.
+
+## Results
+
+### Night and day differences
+Analysis found daytime posts to have higher fear values for three of the five search terms. Moreover, the combination of all groups found the most fearful comments to be posted during daytime hours, 6 AM to 6 PM. Visualized below, the bar charts show the night-and-day comparison of fear values for each search term, and the pie chart shows the average ratio of night-fear values to day-fear values for all combined groups. 
+
+```{r load_data, echo=FALSE, message=FALSE, warning=FALSE}
+library(syuzhet)
+library(dplyr)
+library(tm)
+
+candy <- read.csv("candy.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+ghosts <- read.csv("ghosts.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+halloween <- read.csv("halloween.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8", 
+                      quote = "",)
+vampires <- read.csv("vampires.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+witches <- read.csv("witches.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8",
+                    quote = "",)
+
+# Add a common column so we can compare these sets later if we want
+candy$group <- "candy"
+ghosts$group <- "ghosts"
+halloween$group <- "halloween"
+vampires$group <- "vampires"
+witches$group <- "witches"
+
+dark <- rbind(ghosts, halloween, candy, vampires, witches)
+
+
+dark$network <- as.factor(dark$network)
+dark$type <- as.factor(dark$type)
+dark$popularity_name <- as.factor(dark$popularity_name)
+
+badrows <- c(grep("Bust That Ghost", as.character(dark$network)),
+             grep("2019", as.character(dark$type)),
+             grep("http", as.character(dark$popularity_name)),
+             grep("vkontakte", as.character(dark$network)))
+
+dark <- dark[-badrows, ]
+
+dark$network <- droplevels(dark$network)
+dark$type <- droplevels(dark$type)
+dark$popularity_name <- droplevels(dark$popularity_name)
+
+my_data <- dark[ , c("network", "posted", "text", "type", "group")]
+
+my_data$text <- gsub("http[s]?.*", "", my_data$text)
+my_data$text <- gsub("@[A-z0-9]*", "", my_data$text)
+my_data$text <- gsub("\\W", " " , my_data$text)
+my_data$text <- gsub("\\d", " " , my_data$text)
+my_data$text <- gsub("\\b[A-z]{1}\\b", " ", my_data$text)
+my_data$text <- gsub("\n", " ", my_data$text) %>% 
+  tolower() %>% 
+  stripWhitespace()
+
+my_sentiment <- cbind(my_data, get_nrc_sentiment(my_data$text))
+
+my_sentiment$posted <- gsub("T", " ", my_sentiment$posted) %>% 
+  as.POSIXct()
+my_sentiment$hour <- strftime(my_sentiment$posted, format = "%H") %>% 
+  as.numeric()
+
+my_sentiment$darkness[my_sentiment$hour < 6] <- "night"
+my_sentiment$darkness[my_sentiment$hour >= 6] <- "day"
+my_sentiment$darkness[my_sentiment$hour > 18] <- "night"
+
+fears <- my_sentiment %>% 
+  group_by(darkness) %>% 
+  summarise(fear = mean(fear))
+
+# pie(fears$fear, fears$darkness, col = c("yellow", "navy"))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.fullwidth = TRUE}
+# group by and summarize
+fears_group_dark <- my_sentiment %>% 
+  group_by(group, darkness) %>% 
+  summarise(fear = mean(fear))
+
+# tell R that I want to put the combine the next plots in 2 rows, 3 columns
+par(mfrow = c(2, 3))
+
+# loop to create bar plots comparing by group
+for (grp in unique(fears_group_dark$group)) {
+  this_data <- fears_group_dark[fears_group_dark$group == grp, ]
+  barplot(this_data$fear, names.arg = this_data$darkness, main = grp, col = c("yellow", "navy"), ylab="average fear level")
+}
+
+pie(fears$fear, fears$darkness, col = c("yellow", "navy"), main = "ratio of fear in all groups")
+```
+
+### Hourly differences
+Rather than daytime or nighttime, more granular analysis highlights posts made between 6--7 AM to have the highest average levels of fear.
+
+```{r echo=FALSE, fig.height=2.4, fig.fullwidth = TRUE}
+fear_time <- my_sentiment %>% 
+  group_by(hour) %>% 
+  summarise(fear = mean(fear))
+
+the_colors <- c(rep("navy", 6), 
+                rep("yellow", 12),
+                rep("navy", 6))
+
+barplot(fear_time$fear, names.arg = fear_time$hour, col=the_colors,  ylab="fear", xlab = "hour of post")
+```
+
+## Discussion
+Entries with the highest fear values show a flaw in the experiment: short texts are poorly suited for measuring emotional valence. One post with a high fear value is about choosing appropriate shoes for running; another advertises a book. It's unclear that these posts *should* be among those with the greatest fear in the whole set. 
+
+Additionally, posts' time zones may be inaccurate. Of 2,685 values, eleven are from Central Standard Time; the rest are Central Daylight Time. Some probably don't reflect the time zone of the person posting
+
+Ignoring these potential flaws, results show the hypothesis mostly disproved. Rather than night time, social media posts about topics related to Halloween show the most fear at daybreak.
+
+## References
+
+* [social-searcher.com](social-searcher.com), with search terms candy, ghosts, halloween, vampires, and witches.
+* `R` with the `dplyr` and `syuzhet` packages
+
+
+

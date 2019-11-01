@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Are Social Media Users Afraid of the Dark?</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="James Clawson" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="my-style.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Are Social Media Users Afraid of the Dark?
+## 🎃 <br> The Lifecycle of a Data Analysis Project
+### James Clawson
+### Grambling State University
+### 24 Oct. 2019
+
+---
+
+class: middle
+
+# 1. moving from hunch to hypothesis
+# 2. unbaking a cake
+# 3. putting it all together
+
+
+---
+class: inverse, top, right
+
+background-image: url(https://live.staticflickr.com/1418/5144851605_30be755a88_z.jpg)
+background-size: cover
+background-repeat: no-repeat
+background-position: center center
+
+# Halloween is coming&amp;hellip; 
+
+--
+## Are some social media networks &lt;br&gt; more fearful than others?
+
+
+
+???
+
+Image credit: [William Warby, Flickr](https://www.flickr.com/photos/wwarby/5144851605/in/photostream/)
+
+---
+class: inverse, middle
+# from hunch to hypothesis
+
+## 1. Look at data
+## 2. See what's possible
+## 3. Check the focus
+
+---
+# Look at data
+## Import data
+
+I'm going to start by importing the CSV file I downloaded:
+
+
+```r
+dark &lt;- read.csv("ghosts.csv")
+```
+
+### Error
+`Error in read.table(file = file, header = header, sep = sep, quote = quote,  : 
+  more columns than column names`
+
+
+```r
+dark &lt;- read.csv("ghosts.csv", skip = 1)
+```
+
+### It works!
+
+---
+# Look at data
+## prepare data
+
+
+```r
+dark &lt;- read.csv("ghosts.csv", 
+                   skip = 1, 
+                   stringsAsFactors = FALSE, 
+                   encoding = "UTF-8")
+
+dark$network &lt;- as.factor(dark$network)
+dark$type &lt;- as.factor(dark$type)
+dark$popularity_name &lt;- as.factor(dark$popularity_name)
+```
+
+---
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; network &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; user_name &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; posted &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; text &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; url &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; jaby koay &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-19T05:30:02.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://bit.ly/2lZcKvk (Don't miss the limited period offer below. So BUY NOW before stocks run out) Try a Sunday mattress for that blissful sleep night after night. &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=BmdGfPd-vwk &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Krewella &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T17:00:12.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Ghost Out Now smartURL.it/KrewellaGhost Creative Director: Lauren Dunn Directors: Andrew Sandler &amp;amp;amp; Lauren Dunn Executive Producers: Frank Borin Ivanna ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=FOrzOw4v2-g &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; CloudKid &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:27:49.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Confetti - Ghost 〰️ Spotify Playlist: http://cldkid.com/spotify 〰️ Instagram: http://cldkid.com/instagram ◎ Get it here: https://cloudkid.lnk.to/ghost Read about it ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=c0dxbBj2kTg &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Clash Bashing!! &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:00:11.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; What's going on Clash Bashers?! Today we are going to play around with MASS ROYAL GHOSTS! Can this be an effective strategy? It's super fun at the least! &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=sTNZKZ4yeoE &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; midday india &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:00:07.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; What did #SanayaIrani say about her real-life experiences regarding ghosts and spirits? Sanaya also shared why Vikram Bhatt wanted to cast her in the film ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=eU-PgV-Xe6U &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Funhaus &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T13:00:13.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; I swear to Christ if there's so much as a single woman involved with this new Ghostbusters film even an extra or a grip I will drown Rick Moranis in a drum of ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=zSrqt2YQX6o &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; heyitsauraVEVO &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-17T12:00:01.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Au/Ra x Alan Walker Ghost from Death Stranding: Timefall https://smarturl.it/xGhostx DEATH STRANDING available for PlayStation®4 on November 8 2019. &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=0siAhk2DlgA &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; JonTronShow &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-15T16:01:44.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Thanks to Rise Of Kingdoms for sponsoring today's video! Download the game now and support the channel by clicking here: http://patron.me/jontron. Apply for ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=KTiRjQZbUfU &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; LetsPlay &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-15T14:00:01.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; The Play Pals replay their favorite childhood game: Super Ghosts'N Ghouls! More Play Pals ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=8q6TNpmFSpk &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Rotten Tomatoes TV &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-14T18:00:58.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Check out the new The Walking Dead Season 10 Episode 3 Trailer starring Danai Gurira! Let us know what you think in the comments below. ▻ Learn more ... &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; http://www.youtube.com/watch?v=s7jR-GLSL_E &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+# Look at data
+## clean data
+
+
+```r
+badrows &lt;- c(grep("Bust That Ghost", as.character(dark$network)),
+             grep("vkontakte", as.character(dark$network)),
+             grep("2019", as.character(dark$type)),
+             grep("http", as.character(dark$popularity_name)))
+
+dark &lt;- dark[-badrows, ]
+
+dark$network &lt;- droplevels(dark$network)
+dark$type &lt;- droplevels(dark$type)
+dark$popularity_name &lt;- droplevels(dark$popularity_name)
+```
+
+## subset columns
+
+
+```r
+my_data &lt;- dark[ , c("network", "posted", "text", "type")]
+```
+
+---
+# See what's possible: load packages
+
+
+```r
+library(syuzhet)
+library(dplyr)
+library(tm)
+```
+
+---
+# See what's possible: clean text
+
+
+```r
+# Remove URLs, Twitter handles, punctuation, digits, single letter, linebreaks; then convert to lower case and remove extra spacing
+my_data$text &lt;- gsub(pattern = "http[s]?.*", replace = "", my_data$text)
+my_data$text &lt;- gsub(pattern = "@[A-z0-9]*", replace = "", my_data$text)
+my_data$text &lt;- gsub(pattern = "\\W", replace = " " , my_data$text)
+my_data$text &lt;- gsub(pattern = "\\d", replace = " " , my_data$text)
+my_data$text &lt;- gsub(pattern = "\\b[A-z]{1}\\b", replace = " ", my_data$text)
+my_data$text &lt;- gsub("\n", " ", my_data$text) %&gt;% 
+  tolower() %&gt;% 
+  stripWhitespace()
+```
+
+---
+# See what's possible: sentiment analysis
+
+
+```r
+my_sentiment &lt;- cbind(my_data, get_nrc_sentiment(my_data$text))
+```
+
+---
+# Check the focus
+
+
+```r
+fears &lt;- my_sentiment %&gt;% 
+  group_by(network) %&gt;% 
+  summarise(fear = mean(fear))
+
+fears
+```
+
+```
+## # A tibble: 10 x 2
+##    network      fear
+##    &lt;fct&gt;       &lt;dbl&gt;
+##  1 dailymotion 0.682
+##  2 facebook    0.125
+##  3 flickr      0.580
+##  4 instagram   0.845
+##  5 reddit      1.14 
+##  6 tumblr      0.842
+##  7 twitter     0.49 
+##  8 vimeo       1.35 
+##  9 web         0.556
+## 10 youtube     1.04
+```
+
+
+---
+class: inverse, bottom, center
+
+background-image: url(https://live.staticflickr.com/6030/5966894496_cdfeb202cc_z.jpg)
+background-size: cover
+background-repeat: no-repeat
+background-position: center center
+
+# Is this what I want to look at? Are there better questions I'm more interested in asking of the data?
+
+
+???
+
+Image credit: [Joe deSousa, Flickr](https://www.flickr.com/photos/mustangjoe/5966894496)
+
+
+---
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; network &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; posted &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; type &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; anger &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; anticipation &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; disgust &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; fear &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; joy &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; sadness &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; surprise &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; trust &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-19T05:30:02.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T17:00:12.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:27:49.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:00:11.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T15:00:07.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-18T13:00:13.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-17T12:00:01.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-15T16:01:44.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-15T14:00:01.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-14T18:00:58.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-14T01:32:18.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-12T03:45:02.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-11T22:00:04.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-10T18:59:52.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; youtube &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2019-10-06T21:47:29.000Z &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; video &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+---
+class: inverse, top, right
+
+background-image: url(https://live.staticflickr.com/1418/5144851605_30be755a88_z.jpg)
+background-size: cover
+background-repeat: no-repeat
+background-position: center center
+
+# New question&amp;hellip;
+
+## Are posts more fearful &lt;br&gt; at night or during the day?
+
+### My guess: at night
+
+???
+
+Image credit: [William Warby, Flickr](https://www.flickr.com/photos/wwarby/5144851605/in/photostream/)
+
+---
+
+class: inverse, center, middle
+
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Pate_du_chef_pastikovy_dort.jpg/744px-Pate_du_chef_pastikovy_dort.jpg)
+background-size: cover
+background-repeat: no-repeat
+background-position: center center
+
+# Unbake the cake: &lt;br&gt; What goes into it?
+
+
+???
+
+Image credit: [Paté cake, Wikipedia](https://commons.wikimedia.org/wiki/File:Pate_du_chef_pastikovy_dort.jpg)
+
+---
+
+# Gather ingredients
+
+
+```r
+# After I strip the random "T" from some rows in the `posted` column, I can convert it to POSIXct
+my_sentiment$posted &lt;- gsub("T", " ", my_sentiment$posted) %&gt;% 
+  as.POSIXct()
+
+# After the `posted` column is a date-time, extract just the hour digits into a new column
+my_sentiment$hour &lt;- strftime(my_sentiment$posted, format = "%H") %&gt;% 
+  as.numeric()
+
+# Add a new column based on values in the `hour` column; daytime will be 6 AM until 6 PM 
+my_sentiment$darkness[my_sentiment$hour &lt; 6] &lt;- "night"
+my_sentiment$darkness[my_sentiment$hour &gt;= 6] &lt;- "day"
+my_sentiment$darkness[my_sentiment$hour &gt; 18] &lt;- "night"
+```
+
+---
+class: inverse, left, top
+
+background-image: url(https://live.staticflickr.com/8163/7308563880_37834bc4ef_z.jpg)
+background-size: cover
+background-repeat: no-repeat
+background-position: center center
+
+# Put it all together
+
+
+???
+
+Image credit: [Andrea Goh, Flickr](https://www.flickr.com/photos/thebokeeffect/7308563880)
+
+---
+# Mix it together
+
+
+```r
+fears &lt;- my_sentiment %&gt;% 
+  group_by(darkness) %&gt;% 
+  summarise(fear = mean(fear))
+```
+
+---
+# Bake it up!
+
+
+```r
+pie(fears$fear, fears$darkness, col = c("yellow", "navy"))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+
+---
+
+# Next is the weird stage. *How far do you want to go?* *What else would you like to do?* You can either stop or continue to ask more interesting questions.
+
+--
+
+### In my case, I decided to add a few more search terms so that I can know better whether I can trust my outcomes. When the new data set disproved my hypothesis, I decided to find the hour with the greatest average fear, which turned out to be more interesting anyway.
+
+.right[**[Read the full rationale of process here](https://jmclawson.net/bigdata/darkness/process.html) | [Read the final report here](https://jmclawson.net/bigdata/darkness/report.html)**]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

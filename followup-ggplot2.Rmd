@@ -1,0 +1,187 @@
+---
+title: "When is the Witching Hour? Visualizing with ggplot2"
+author: "James M. Clawson"
+date: "22 Oct. 2019"
+output: 
+  github_document
+  # tufte::tufte_html:
+  #   tufte_variant: "envisioned"
+  #   css: my-tufte.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.fullwidth = TRUE)
+```
+
+## Follow up
+This document continues from the [previous work](process.html), which used the base graphics in R to visualize the data. Let's start by loading the important objects saved at the end of the last session:
+
+```{r}
+my_sentiment <- readRDS("my_sentiment.RDS")
+fear_time <- readRDS("fear_time.RDS")
+```
+
+## Visualizing the fear value per hour
+
+If I want visualizations to look nicer (in my opinion) than the base graphics, I can improve them by switching over to `ggplot2`. Since `ggplot2` makes it possible to build up a visualization consecutively, we can use that to our advantage to try things out as we go, moving slowly from one improvement to the next.
+
+```{r fig.height=3, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+
+my_plot <- fear_time %>% 
+  # Plot hourly columns, changing fill color over the day, and hide the legend
+  ggplot(aes(x = hour, y = fear, fill = hour)) +
+  geom_col(show.legend = FALSE)
+
+my_plot
+```
+
+This is definitely going on the right path. But I'd still like to make it look a little nicer. Let's see what we can do with the theme, getting rid of the gray background and making the hours a little closer to the color scheme of night and day:
+
+```{r fig.height=3}
+my_plot + 
+  # first, change the theme
+  theme_linedraw() + 
+  # then change the fill colors along a gradient
+  # if I set four colors, it'll divide the day into four
+  scale_fill_gradientn(colors = c("navy", # midnight to 6 AM
+                                "goldenrod", # 6 AM to noon
+                                "goldenrod", # noon to 6 PM, etc.
+                                "navy"))
+```
+
+This is pretty close, but it would be nicer if the night were darker and full of more terror. Let's add some black:
+
+```{r fig.height=3}
+my_plot <- my_plot + 
+  theme_linedraw() + 
+  scale_fill_gradientn(colors = c("black", "navy", # two colors midnight to 6
+                                "goldenrod", "goldenrod", # balanced with 2 colors
+                                "goldenrod", "goldenrod", # etc.
+                                "navy", "black"))
+
+my_plot
+```
+
+This is exactly what I want. Now, to clean up the labels a little. I want to add a title so that it still makes sense without the report.
+
+```{r fig.height=3}
+my_plot <- my_plot + 
+  labs(title = "Social networkers are most fearful at daybreak") +
+  scale_x_continuous(breaks = seq(from = 0, to = 21, by = 3),
+                     labels = c("midnight","3 AM", "6 AM", "9 AM",
+                              "noon", "3 PM", "6 PM", "9 PM"))
+
+my_plot
+```
+
+I'm happy with this! 
+
+## Visualizing by network
+
+Now, to see about any other visualizations. What if I wanted to compare fear values in the daytime versus the nighttime, with one chart for each network?
+
+```{r fig.height=3}
+viz_network_darkness_fear <- my_sentiment %>% 
+  group_by(network, darkness) %>% 
+  summarise(fear = mean(fear)) %>% 
+  # Now plot! Assign colors by "darkness" (time of day)
+  # Make them side-by-side columns, and hide the legend
+  ggplot(aes(x=darkness, y = fear, fill = darkness)) +
+  geom_col(show.legend = FALSE) + 
+  # Separate them by network
+  facet_grid(.~network)
+
+viz_network_darkness_fear
+```
+
+This is looking pretty good. But we need to improve the theme, colors, and labels:
+
+```{r fig.height=3}
+viz_network_darkness_fear <- viz_network_darkness_fear +
+  theme_linedraw() + 
+  scale_fill_manual(values = c("goldenrod","navy")) +
+  labs(title = "Which social network is most afraid of the dark? (Hint: it's Instagram)",
+       x = "time of post",
+       y = "average fear value")
+
+viz_network_darkness_fear
+```
+
+Good! This is an effective way to compare these groupings. But what if, instead of actual values, we want to contrast by percentages of total fear? We can make stacking bar charts!
+
+```{r fig.height=3}
+# Group by and summarize
+last_chart <- my_sentiment %>% 
+  group_by(network, darkness) %>% 
+  summarise(fear = mean(fear)) %>% 
+  # Now plot! Assign colors by "darkness" (time of day)
+  # Here, there's no x value because we're stacking the bars
+  ggplot(aes(x="", y = fear, fill = darkness)) +
+  # the position = "fill" value means each bar will go to 100%
+  geom_col(position="fill")
+
+last_chart + facet_wrap(.~network, nrow = 1)
+```
+
+This shows us what we want. But wouldn't it be nicer if these were in descending order? To do that, we need to go back to the data set and reorder our factors.
+
+```{r fig.height=3}
+# Let's save this summary table
+fear_network_darkness <- my_sentiment %>% 
+  group_by(network, darkness) %>% 
+  summarise(fear = mean(fear))
+
+# Now reorder factors. We're doing this manually, but 
+# we're basically putting them in order of descending "night" values
+fear_network_darkness$network <- 
+  factor(fear_network_darkness$network, 
+         levels = c("instagram", "tumblr", "dailymotion", 
+                    "reddit", "youtube", "vimeo", 
+                    "flickr", "facebook", "twitter", 
+                    "web"))
+
+# Now try the plot again, starting from the new data frame
+last_chart <- fear_network_darkness %>% 
+  ggplot(aes(x="", y = fear, fill = darkness)) +
+  geom_col(position="fill")
+
+last_chart + facet_wrap(.~network, nrow = 1)
+```
+
+Yes, this is what we're after. But wouldn't it be a little nicer if these were pie charts? They may even end up looking like clocks, which is thematically relevant to our question. And with the smaller visualizations, I'll separate them into two rows, which gives each the name of grouping enough width to print more nicely.
+
+```{r}
+last_chart <- last_chart +
+  # Separate them by network
+  facet_wrap(.~network, nrow = 2) + 
+  # convert to pie charts by using polar coordinates
+  coord_polar("y", direction=-1)
+
+last_chart
+```
+
+This is looking great. Now for polish:
+
+```{r}
+last_chart <- last_chart +
+  # improve the theme, legend, and colors
+  theme_linedraw() + 
+  scale_fill_manual(name = "percentage \nof total fear",
+                    values = c("goldenrod","navy")) +
+  # hide the mess on the pie charts
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid  = element_blank()) +
+  # Finalize the labels
+  labs(title = "Which social networks show their greatest fears when it's dark?",
+       subtitle = "(Answer: Instagram, Tumblr, Dailymotion, and Reddit)",
+       x = element_blank(),
+       y = element_blank())
+
+last_chart
+```
+
+Although this last chart isn't really part of my revised project question, it's nevertheless a nice way to show the ratios among each of the networks, as asked in the first question when I started my analysis.

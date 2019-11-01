@@ -1,0 +1,325 @@
+---
+title: "When is the Witching Hour? Documenting the Process"
+author: "James M. Clawson"
+date: "19 Oct. 2019"
+output: 
+  tufte::tufte_html:
+    tufte_variant: "envisioned"
+    css: my-tufte.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+## Planning
+I think I want to do something related to Halloween for this project, so I'm going to go to [social-searcher.com](social-searcher.com) to find my data set, searching for the word "ghosts." It might be interesting to see what I can find to correlate the social network to the amount of fear shown by sentiment analysis. I don't really have a hypothesis yet, but I have a hunch that it might be interesting to see how the different networks compare.
+
+## Initial analysis
+
+### Import data
+I'm going to start by importing the CSV file I downloaded:
+
+```{r eval=FALSE, include=TRUE}
+ghosts <- read.csv("ghosts.csv")
+
+```
+
+This gives me the error "more columns than column names," an error that suggests the file has some kind of mismatch between the first row (where column names are defined) and later rows. I'll try reading it again by skipping the first line to see what's wrong:
+
+```{r}
+ghosts <- read.csv("ghosts.csv", skip = 1)
+```
+
+This seems to have worked perfectly. I guess the CSV file was malformed in some way. But too many of my columns are factors, so I'm going to change one parameter. And since I want to make sure all the characters are read correctly, I'm going to declare my encoding:
+
+```{r}
+ghosts <- read.csv("ghosts.csv", 
+                   skip = 1, 
+                   stringsAsFactors = FALSE, 
+                   encoding = "UTF-8")
+
+dark <- ghosts
+```
+
+Now a few columns should be switched back to factors:
+
+```{r}
+dark$network <- as.factor(dark$network)
+dark$type <- as.factor(dark$type)
+dark$popularity_name <- as.factor(dark$popularity_name)
+```
+
+Things are mostly well formed, but my data is still a little messy. Some of the "networks" in column one are bizarre, so I'm going to remove those rows, and then drop these levels. The same thing happens in a couple other factor columns.
+
+```{r}
+# I've added "vkontakte" here to the networks, as its text is almost wholly in the Cyrillic alphabet, and I can't read it.
+badrows <- c(grep("Bust That Ghost", as.character(dark$network)),
+             grep("vkontakte", as.character(dark$network)),
+             grep("2019", as.character(dark$type)),
+             grep("http", as.character(dark$popularity_name)))
+
+dark <- dark[-badrows, ]
+
+dark$network <- droplevels(dark$network)
+dark$type <- droplevels(dark$type)
+dark$popularity_name <- droplevels(dark$popularity_name)
+```
+
+Now I'm going to limit the columns to make the data easier to handle:
+
+```{r}
+my_data <- dark[ , c("network", "posted", "text", "type")]
+```
+
+At this point, I think I'm ready to pull in the sentiment analysis.
+
+### Sentiment analysis
+
+Before getting too far along, I need to load up some useful packages:
+
+```{r message=FALSE, warning=FALSE}
+library(syuzhet)
+library(dplyr)
+library(tm)
+```
+
+Now, I'm going to do some quick cleaning of the "text" column of `my_data`:
+
+```{r}
+# Remove URLs
+my_data$text <- gsub(pattern = "http[s]?.*", replace = "", my_data$text)
+
+# Remove any Twitter handles
+my_data$text <- gsub(pattern = "@[A-z0-9]*", replace = "", my_data$text)
+
+# Remove any punctuation
+my_data$text <- gsub(pattern = "\\W", replace = " " , my_data$text)
+
+# Remove any digits
+my_data$text <- gsub(pattern = "\\d", replace = " " , my_data$text)
+
+# Remove any single letters or single digits
+my_data$text <- gsub(pattern = "\\b[A-z]{1}\\b", replace = " ", my_data$text)
+
+# Remove linebreaks, convert to lower case, and remove extra spacing
+my_data$text <- gsub("\n", " ", my_data$text) %>% 
+  tolower() %>% 
+  stripWhitespace()
+```
+
+Now add the columns of sentiment:
+
+```{r}
+my_sentiment <- cbind(my_data, get_nrc_sentiment(my_data$text))
+```
+
+Now I can easily check to see if one of the social networks has higher fear values:
+
+```{r}
+fears <- my_sentiment %>% 
+  group_by(network) %>% 
+  summarise(fear = mean(fear))
+
+fears
+```
+
+It looks like posts on Vimeo have the highest average value of fear. But this is really not interesting to me.
+
+At this point of the project, I'm standing at the refrigerator door wondering what I'm going to eat for dinner. Piecing together different ingredients, what can I make? Peeking at the head of the data frame lets me know what I'm working with; I'm ignoring the text column for now, as there's too much there to work with:
+
+```{r}
+head(my_sentiment[,-3])
+```
+
+After some consideration, I'm interested in working with the "fear" and "posted" columns, to see if there's any connection between time of day and fearfulness of a post. And this is already an interesting enough exploration that I'm willing to make a hypothesis: posts made at night have more fear than posts made during the day. Now I just need to see if my hypothesis is true.
+
+### Differentiate "night" and "day"
+
+To correlate fear with posting time, I need to clean up some of the mess in the "posted" column. Then, I'll add a new column including only the hour of posting, along with another new column distinguishing daytime from night.
+
+```{r}
+# After I strip the random "T" from some rows in the `posted` column, I can convert it to POSIXct
+my_sentiment$posted <- gsub("T", " ", my_sentiment$posted) %>% 
+  as.POSIXct()
+
+# After the `posted` column is a date-time, extraxct just the hour digits into a new column
+my_sentiment$hour <- strftime(my_sentiment$posted, format = "%H") %>% 
+  as.numeric()
+
+# Add a new column based on values in the `hour` column; daytime will be 6 AM until 6 PM 
+my_sentiment$darkness[my_sentiment$hour < 6] <- "night"
+my_sentiment$darkness[my_sentiment$hour >= 6] <- "day"
+my_sentiment$darkness[my_sentiment$hour > 18] <- "night"
+```
+
+Check to see if posts are more scared in the dark:
+
+```{r fig.margin = FALSE}
+fears <- my_sentiment %>% 
+  group_by(darkness) %>% 
+  summarise(fear = mean(fear))
+
+pie(fears$fear, fears$darkness, col = c("yellow", "navy"))
+```
+
+The pie chart shows that, on average, posts have more fear during the night.
+
+## Expand my search
+
+These results look really good, and they seem to corroborate my hypothesis, that people are more afraid in the dark than they are when it's light out. But my findings don't seem very rigorous, considering how few night time rows there are (40) compared to the daytime rows (472). So I'm going to add more data and rerun the analysis:
+
+### Load in more data sets
+Try to load one of the data sets in, using the defaults for `read.csv()`:
+
+```{r eval=FALSE, include=TRUE}
+halloween <- read.csv("halloween.csv")
+```
+
+This gives the same error as before, with column names, so skip the first line again:
+
+```{r eval=FALSE, include=TRUE}
+halloween <- read.csv("halloween.csv", skip = 1)
+```
+
+This time gives a new error: "EOF within quoted string." A Google search tells me this is because one of my cells uses a quotation mark inside it, and that apparently makes R confused. So I add another correction to see if it helps:
+
+```{r}
+halloween <- read.csv("halloween.csv", skip = 1, quote = "")
+```
+
+It works! I'm ready to load all of my data now. Since I had the "EOF" error only with two of my tables, I've only added the correction to these sets:
+
+```{r}
+candy <- read.csv("candy.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+ghosts <- read.csv("ghosts.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+halloween <- read.csv("halloween.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8", 
+                      quote = "",)
+vampires <- read.csv("vampires.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8")
+witches <- read.csv("witches.csv", skip = 1, stringsAsFactors = FALSE, encoding = "UTF-8",
+                    quote = "",)
+
+# Add a common column so we can compare these sets later if we want
+candy$group <- "candy"
+ghosts$group <- "ghosts"
+halloween$group <- "halloween"
+vampires$group <- "vampires"
+witches$group <- "witches"
+
+dark <- rbind(ghosts, halloween, candy, vampires, witches)
+
+```
+
+Now, run through all the previous steps in one big chunk:
+
+```{r}
+dark$network <- as.factor(dark$network)
+dark$type <- as.factor(dark$type)
+dark$popularity_name <- as.factor(dark$popularity_name)
+
+badrows <- c(grep("Bust That Ghost", as.character(dark$network)),
+             grep("2019", as.character(dark$type)),
+             grep("http", as.character(dark$popularity_name)),
+             grep("vkontakte", as.character(dark$network)))
+
+dark <- dark[-badrows, ]
+
+dark$network <- droplevels(dark$network)
+dark$type <- droplevels(dark$type)
+dark$popularity_name <- droplevels(dark$popularity_name)
+
+my_data <- dark[ , c("network", "posted", "text", "type", "group")]
+
+my_data$text <- gsub("http[s]?.*", "", my_data$text)
+my_data$text <- gsub("@[A-z0-9]*", "", my_data$text)
+my_data$text <- gsub("\\W", " " , my_data$text)
+my_data$text <- gsub("\\d", " " , my_data$text)
+my_data$text <- gsub("\\b[A-z]{1}\\b", " ", my_data$text)
+my_data$text <- gsub("\n", " ", my_data$text) %>% 
+  tolower() %>% 
+  stripWhitespace()
+
+my_sentiment <- cbind(my_data, get_nrc_sentiment(my_data$text))
+
+my_sentiment$posted <- gsub("T", " ", my_sentiment$posted) %>% 
+  as.POSIXct()
+my_sentiment$hour <- strftime(my_sentiment$posted, format = "%H") %>% 
+  as.numeric()
+
+my_sentiment$darkness[my_sentiment$hour < 6] <- "night"
+my_sentiment$darkness[my_sentiment$hour >= 6] <- "day"
+my_sentiment$darkness[my_sentiment$hour > 18] <- "night"
+```
+
+## Visualize
+
+First, repeat the previous pie chart and see if the hypothesis is still true.
+
+```{r fig.margin = FALSE}
+fears <- my_sentiment %>% 
+  group_by(darkness) %>% 
+  summarise(fear = mean(fear))
+
+pie(fears$fear, fears$darkness, col = c("yellow", "navy"))
+```
+
+The hypothesis is no longer true! And while our posts are still predominately from the daytime (2,233 rows) when compared to the night time (452 rows), this pie chart still feels more definitive: The average fear level in posts made during the night time (defined as before 6 AM and after 6 PM) is lower than the average fear level of posts made at other times of the day.
+
+### Visualizing by group
+
+Ok, we could stop things here, but I'm curious. If the "ghosts" data went against the trend, what kind of breakdown do we see among the different data groups? I can make a quick loop to visualize bar charts:
+
+```{r fig.fullwidth = TRUE}
+# group by and summarize
+fears_group_dark <- my_sentiment %>% 
+  group_by(group, darkness) %>% 
+  summarise(fear = mean(fear))
+
+# tell R that I want to put the combine the next plots in 2 rows, 3 columns
+par(mfrow = c(2, 3))
+
+# loop to create bar plots comparing by group
+for (grp in unique(fears_group_dark$group)) {
+  this_data <- fears_group_dark[fears_group_dark$group == grp, ]
+  barplot(this_data$fear, names.arg = this_data$darkness, main = grp, col = c("yellow", "navy"), ylab="average fear level")
+}
+```
+
+Some of these groups are surprising. I maybe could have guessed that the search term for vampires would show more fearfulness during the day, but I never would have guessed it for witches!
+
+### Visualizing by hour of posting
+
+Since night time postings don't behave how I expected them to, I want to see how the fear values break down by hour.
+
+```{r fig.height=4, fig.fullwidth = TRUE}
+fear_time <- my_sentiment %>% 
+  group_by(hour) %>% 
+  summarise(fear = mean(fear))
+
+barplot(fear_time$fear, names.arg = fear_time$hour, ylab="average fear level", xlab = "hour of post")
+```
+
+Visualizing the fear values for each hour looks super interesting! In fact, it suggests trends that are more more interesting than my original question: Instead of showing fear of the dark, these posts on social media seem to have greater values of fear right at daybreak. That's really dark. (Pardon the pun.)
+
+I would like to modify my project to show something about this chart, and I think I want to include something like it in my final analysis. But I want it to look nice, so I'm going to add color by day and night:
+```{r fig.height=4, fig.fullwidth = TRUE}
+the_colors <- c(rep("navy", 6), 
+                rep("yellow", 12),
+                rep("navy", 6))
+
+barplot(fear_time$fear, names.arg = fear_time$hour, col=the_colors,  ylab="average fear level", xlab = "hour of post")
+```
+
+I'm happy with this visualization! And I'm happy with these analyses. From a hunch, I moved toward a hypothesis and further analysis that was just a little more complex. 
+
+There's nothing inherently wrong with the original question, and it could have been answered: *Vimeo's network shows the greatest average value of fear.* But that wasn't very interesting to me, so I could have stopped wholly by answering my second question, finding my hypothesis to be negative: *No, social networkers don't show more fear in the posts they make at night time.* But answering this question made me curious to answer other questions, which lead to other analyses. All that remains is to write up the report (available as [a webpage](https://jmclawson.net/bigdata/darkness/report.html), [a PDF](https://jmclawson.net/bigdata/darkness/report.pdf) or [an R Markdown file](https://jmclawson.net/bigdata/darkness/report.Rmd)).
+
+## Save
+Now that I have everything done, I'm going to make sure I back up the work by saving the important objects to disk:
+
+```{r}
+saveRDS(my_sentiment, "my_sentiment.RDS")
+saveRDS(fear_time, "fear_time.RDS")
+```
+
+It's always a good idea to back up your work once you've reached certain milestones, but I have an ulterior motive, too: I'll be continuing this analysis with visualizations in `ggplot2` on [another webpage](process2.html), and I want to be able to import these tables there with little difficulty.
