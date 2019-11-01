@@ -15,7 +15,7 @@ knitr::opts_chunk$set(fig.fullwidth = TRUE)
 ```
 
 ## Follow up
-This document continues from the [previous work](process.html), which used the base graphics in R to visualize the data. Let's start by loading the important objects saved at the end of the last session:
+This document continues from the [previous work](1_main.html), which used the base graphics in R to visualize the data. Let's start by loading the important objects saved at the end of the last session:
 
 ```{r}
 my_sentiment <- readRDS("my_sentiment.RDS")
