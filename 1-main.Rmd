@@ -322,4 +322,4 @@ saveRDS(my_sentiment, "my_sentiment.RDS")
 saveRDS(fear_time, "fear_time.RDS")
 ```
 
-It's always a good idea to back up your work once you've reached certain milestones, but I have an ulterior motive, too: I'll be continuing this analysis with visualizations in `ggplot2` on [another webpage](process2.html), and I want to be able to import these tables there with little difficulty.
+It's always a good idea to back up your work once you've reached certain milestones, but I have an ulterior motive, too: I'll be continuing this analysis with visualizations in `ggplot2` on [another webpage](2-followup_ggplot2.html), and I want to be able to import these tables there with little difficulty.
